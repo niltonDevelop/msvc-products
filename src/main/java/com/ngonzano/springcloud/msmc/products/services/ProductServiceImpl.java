@@ -13,7 +13,7 @@ import com.ngonzano.springcloud.msmc.products.repositories.ProductRepository;
 
 @Service
 public class ProductServiceImpl implements ProductService {
-    
+
     final private ProductRepository repository;
     final private Environment environment;
 
@@ -40,5 +40,22 @@ public class ProductServiceImpl implements ProductService {
         });
     }
 
+    @Override
+    @Transactional
+    public Product save(Product product) {
+        return repository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        repository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public Product update(Long id, Product product) {
+        return repository.save(product);
+    }
+
 }
-    
