@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ngonzano.springcloud.msmc.products.entities.Product;
+import com.ngonzano.libs.msvc.commons.entities.Product;
 import com.ngonzano.springcloud.msmc.products.services.ProductService;
 
 @RestController
