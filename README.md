@@ -1,81 +1,43 @@
 # msvc-products
 
-Microservicio **Spring Boot** para gestión de productos dentro de un ecosistema Spring Cloud. Expone una API REST con prefijo versionado (`/api/{versión}`), persiste datos en **MySQL** con **JPA/Hibernate** y expone **Actuator** para observabilidad básica.
+Microservicio de **gestión de productos**. Expone una API REST CRUD y persiste datos en MySQL usando la entidad compartida `Product` de `libs-msvc-commons`.
 
-## Requisitos
+## Stack
 
-- **Java 21** (configurado en el `pom.xml`)
-- **MySQL** con la base y credenciales indicadas en `application.properties` (o variables de entorno equivalentes en tu despliegue)
-- **Maven** (o usar el wrapper: `./mvnw`)
+- Java 21 · Spring Boot 4.0.6 · Spring Cloud 2025.1.1
+- Puerto: **dinámico** (`${PORT:0}`) — consultar instancia en Eureka
+- Base de datos: MySQL `db_springboot_cloud`
 
-## Cómo ejecutar
+## Endpoints
 
-```bash
-./mvnw spring-boot:run
-```
-
-Por defecto el servicio escucha en el puerto **8001** (`server.port`).
-
-## API HTTP (hasta ahora)
-
-El prefijo global se configura en `ApiWebConfiguration` y en `app.api.version` (por defecto `v1`).
+Base del servicio: `/product`
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `GET` | `/api/v1/product` | Lista todos los productos |
-| `GET` | `/api/v1/product/{id}` | Detalle por id; `404` si no existe |
+| GET | `/product` | Lista todos los productos |
+| GET | `/product/{id}` | Obtiene un producto por ID |
+| POST | `/product` | Crea un producto |
+| PUT | `/product/{id}` | Actualiza un producto |
+| DELETE | `/product/{id}` | Elimina un producto |
 
-En la respuesta JSON, el campo `port` en `Product` es **transient** (no se guarda en BD): se rellena en el servicio con el puerto local del servidor Spring (`local.server.port`) para depuración o demostración en entornos con varias instancias.
+### Vía API Gateway (puerto 8080)
 
-## Configuración relevante
+Prefijo: `/api/product/**` (StripPrefix=2)
 
-- **Aplicación:** `spring.application.name=products`, `server.port=8001`
-- **Versión de API:** `app.api.version` (p. ej. `v1`)
-- **Base de datos:** URL, usuario, contraseña y `spring.jpa.hibernate.ddl-auto` en `src/main/resources/application.properties`  
-  En producción suele usarse `validate` + migraciones (Flyway/Liquibase) en lugar de `update`.
+| Método | Ruta Gateway |
+|--------|--------------|
+| GET | `/api/product/product` |
+| GET | `/api/product/product/{id}` |
+| POST | `/api/product/product` |
+| PUT | `/api/product/product/{id}` |
+| DELETE | `/api/product/product/{id}` |
 
-## Estructura del código
+## Importancia en el ecosistema
 
-```
-src/main/java/com/ngonzano/springcloud/msmc/products/
-├── ProductsApplication.java      # Punto de entrada (@SpringBootApplication)
-├── config/
-│   ├── ApiProperties.java       # app.api.version → prefijo /api/{version}
-│   └── ApiWebConfiguration.java # PathPrefix para @RestController
-├── controllers/
-│   └── ProductController.java   # REST /product
-├── entities/
-│   └── Product.java             # Entidad JPA products
-├── repositories/
-│   └── ProductRepository.java   # Spring Data JPA
-└── services/
-    ├── ProductService.java
-    └── ProductServiceImpl.java  # Lógica + port en findAll / findById
-```
+Microservicio de **dominio de catálogo**. Es la fuente de datos de productos para **msvc-items**, que lo consume vía Feign/WebClient con circuit breaker.
 
-## Dependencias Maven (`pom.xml`)
+**Dependencias:** Eureka, MySQL, **libs-msvc-commons**.
 
-Stack principal gestionado por **Spring Boot 4.0.6** y **Spring Cloud 2025.1.1** (`dependencyManagement`).
+**Consumido por:** **msvc-items**, **msvc-gateway-server** (proxy).
 
-| Dependencia | Uso en este proyecto |
-|-------------|----------------------|
-| `spring-boot-starter-webmvc` | API REST (controllers, Jackson, servlet stack) |
-| `spring-boot-starter-data-jpa` | Repositorios JPA, Hibernate, transacciones |
-| `mysql-connector-j` (runtime) | Driver JDBC para MySQL |
-| `spring-cloud-starter` | Bootstrap de utilidades Spring Cloud (BOM 2025.1.1) |
-| `spring-boot-starter-actuator` | Endpoints de salud y metadatos (p. ej. bajo `/actuator`) |
-| `spring-boot-devtools` (optional, runtime) | Recarga en desarrollo |
-| `lombok` (optional) | Getters/setters y reducción de boilerplate en entidades |
-| `spring-boot-configuration-processor` (optional) | Metadatos de configuración para IDEs |
-| `spring-boot-starter-data-jpa-test` (test) | Pruebas con contexto JPA |
-| `spring-boot-starter-webmvc-test` (test) | Pruebas Web/MVC |
-
-## Pruebas
-
-```bash
-./mvnw test
-```
-
-## Notas
-
-- El **API Gateway** (si lo usas en el monorepo Spring Cloud) puede enrutar tráfico externo hacia este servicio; la versión visible al cliente puede coincidir o no con `app.api.version` según cómo configures el gateway (rewrite/strip).
+**Orden de arranque recomendado:** 3.º, después de Eureka, MySQL y `libs-msvc-commons` instalada.
