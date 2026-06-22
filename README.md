@@ -7,6 +7,7 @@ Microservicio de **gestión de productos**. Expone una API REST CRUD y persiste 
 - Java 21 · Spring Boot 4.0.6 · Spring Cloud 2025.1.1
 - Puerto: **dinámico** (`${PORT:0}`) — consultar instancia en Eureka
 - Base de datos: MySQL `db_springboot_cloud`
+- **Distributed tracing:** [Micrometer Tracing](https://docs.micrometer.io/tracing/reference/) + Zipkin (Brave). Ver [docs/TRACING.md](docs/TRACING.md)
 
 ## Endpoints
 
@@ -41,3 +42,11 @@ Microservicio de **dominio de catálogo**. Es la fuente de datos de productos pa
 **Consumido por:** **msvc-items**, **msvc-gateway-server** (proxy).
 
 **Orden de arranque recomendado:** 3.º, después de Eureka, MySQL y `libs-msvc-commons` instalada.
+
+## Tracing (Zipkin)
+
+```bash
+cd ../.. && docker compose up -d   # desde msvc-products → raíz SpringCloud; Zipkin en http://localhost:9411
+```
+
+Detalle: [docs/TRACING.md](docs/TRACING.md). Para trazas distribuidas items → products, ambos servicios deben estar activos con tracing habilitado.
